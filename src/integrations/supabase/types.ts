@@ -14,7 +14,169 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      incident_details: {
+        Row: {
+          agency_source: string | null
+          body_part: string | null
+          id: number
+          immediate_cause: string | null
+          incident_id: number
+          mechanism: string | null
+          nature_of_injury: string | null
+        }
+        Insert: {
+          agency_source?: string | null
+          body_part?: string | null
+          id?: number
+          immediate_cause?: string | null
+          incident_id: number
+          mechanism?: string | null
+          nature_of_injury?: string | null
+        }
+        Update: {
+          agency_source?: string | null
+          body_part?: string | null
+          id?: number
+          immediate_cause?: string | null
+          incident_id?: number
+          mechanism?: string | null
+          nature_of_injury?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_details_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          activity: string | null
+          contractor_id: string | null
+          date: string
+          description: string | null
+          id: number
+          inserted_at: string | null
+          severity_level: number | null
+          type: string | null
+        }
+        Insert: {
+          activity?: string | null
+          contractor_id?: string | null
+          date: string
+          description?: string | null
+          id?: number
+          inserted_at?: string | null
+          severity_level?: number | null
+          type?: string | null
+        }
+        Update: {
+          activity?: string | null
+          contractor_id?: string | null
+          date?: string
+          description?: string | null
+          id?: number
+          inserted_at?: string | null
+          severity_level?: number | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspections: {
+        Row: {
+          date: string
+          id: number
+          inserted_at: string | null
+          inspector: string | null
+          score: number | null
+          type: string | null
+        }
+        Insert: {
+          date: string
+          id?: number
+          inserted_at?: string | null
+          inspector?: string | null
+          score?: number | null
+          type?: string | null
+        }
+        Update: {
+          date?: string
+          id?: number
+          inserted_at?: string | null
+          inspector?: string | null
+          score?: number | null
+          type?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          company: string | null
+          created_at: string | null
+          id: string
+          role: string | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string | null
+          id?: string
+          role?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string | null
+          id?: string
+          role?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      training_sessions: {
+        Row: {
+          conductor: string | null
+          date: string
+          id: number
+          inserted_at: string | null
+          no_of_attendees: number | null
+          topic: string | null
+          type: string | null
+        }
+        Insert: {
+          conductor?: string | null
+          date: string
+          id?: number
+          inserted_at?: string | null
+          no_of_attendees?: number | null
+          topic?: string | null
+          type?: string | null
+        }
+        Update: {
+          conductor?: string | null
+          date?: string
+          id?: number
+          inserted_at?: string | null
+          no_of_attendees?: number | null
+          topic?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
