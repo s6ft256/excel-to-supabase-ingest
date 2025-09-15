@@ -38,7 +38,7 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             username,
             company,
@@ -105,7 +105,7 @@ const Auth = () => {
             </TabsList>
             
             <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
+               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -129,6 +129,43 @@ const Auth = () => {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Signing in...' : 'Sign In'}
                 </Button>
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button type="button" variant="secondary" disabled={loading}
+                    onClick={async () => {
+                      try {
+                        const redirect = `${window.location.origin}/auth/callback`;
+                        const { error } = await supabase.auth.signInWithOtp({
+                          email,
+                          options: { emailRedirectTo: redirect },
+                        });
+                        if (error) throw error;
+                        toast({ title: 'Magic link sent', description: 'Check your email to sign in.' });
+                      } catch (error) {
+                        toast({ title: 'Could not send magic link', description: error instanceof Error ? error.message : 'Try again later', variant: 'destructive' });
+                      }
+                    }}
+                  >
+                    Send magic link
+                  </Button>
+                  <Button type="button" variant="ghost" disabled={loading}
+                    onClick={async () => {
+                      try {
+                        const redirect = `${window.location.origin}/auth/callback`;
+                        const { error } = await supabase.auth.resend({
+                          type: 'signup',
+                          email,
+                          options: { emailRedirectTo: redirect },
+                        });
+                        if (error) throw error;
+                        toast({ title: 'Verification sent', description: 'Check your email for a new confirmation link.' });
+                      } catch (error) {
+                        toast({ title: 'Could not resend verification', description: error instanceof Error ? error.message : 'Try again later', variant: 'destructive' });
+                      }
+                    }}
+                  >
+                    Resend verification email
+                  </Button>
+                </div>
               </form>
             </TabsContent>
             
