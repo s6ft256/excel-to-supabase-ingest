@@ -129,6 +129,34 @@ export const sampleData = {
   ] as ParsedTrainingSession[]
 };
 
+export function parseExcelData() {
+  const { incidents, inspections, trainingSessions } = sampleData;
+  
+  return {
+    incidents: incidents.map(incident => ({
+      date: incident.date,
+      activity: incident.activity,
+      description: incident.description,
+      severity_level: incident.severity_level,
+      type: incident.type
+    })),
+    incident_details: [], // No incident details in sample data
+    inspections: inspections.map(inspection => ({
+      date: inspection.date,
+      score: inspection.score,
+      type: inspection.type,
+      inspector: inspection.inspector
+    })),
+    training_sessions: trainingSessions.map(session => ({
+      date: session.date,
+      topic: session.topic,
+      type: session.type,
+      no_of_attendees: session.no_of_attendees,
+      conductor: session.conductor
+    }))
+  };
+}
+
 export function generateSQLInserts() {
   const { contractors, incidents, inspections, trainingSessions } = sampleData;
   

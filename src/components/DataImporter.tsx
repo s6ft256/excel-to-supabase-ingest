@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { generateSQLInserts } from '@/utils/excelParser';
+import { generateSQLInserts, parseExcelData } from '@/utils/excelParser';
 import { supabase } from '@/integrations/supabase/client';
 
 const DataImporter = () => {
@@ -32,19 +32,50 @@ const DataImporter = () => {
 
     setImporting(true);
     try {
-      // Split SQL statements and execute them individually
-      const statements = sqlStatements
-        .split(';\n')
-        .filter(stmt => stmt.trim() && !stmt.trim().startsWith('--'))
-        .map(stmt => stmt.trim());
+      // Get parsed data directly from the excel parser
+      const parsedData = parseExcelData();
+      
+      // Insert incidents
+      if (parsedData.incidents.length > 0) {
+        const { error: incidentsError } = await supabase
+          .from('incidents')
+          .insert(parsedData.incidents);
+        
+        if (incidentsError) {
+          console.error('Error inserting incidents:', incidentsError);
+        }
+      }
 
-      for (const statement of statements) {
-        if (statement) {
-          const { error } = await supabase.rpc('exec_sql', { sql: statement });
-          if (error) {
-            console.error('SQL Error:', error);
-            // Continue with other statements even if one fails
-          }
+      // Insert incident details
+      if (parsedData.incident_details.length > 0) {
+        const { error: detailsError } = await supabase
+          .from('incident_details')
+          .insert(parsedData.incident_details);
+        
+        if (detailsError) {
+          console.error('Error inserting incident details:', detailsError);
+        }
+      }
+
+      // Insert training sessions
+      if (parsedData.training_sessions.length > 0) {
+        const { error: trainingError } = await supabase
+          .from('training_sessions')
+          .insert(parsedData.training_sessions);
+        
+        if (trainingError) {
+          console.error('Error inserting training sessions:', trainingError);
+        }
+      }
+
+      // Insert inspections
+      if (parsedData.inspections.length > 0) {
+        const { error: inspectionsError } = await supabase
+          .from('inspections')
+          .insert(parsedData.inspections);
+        
+        if (inspectionsError) {
+          console.error('Error inserting inspections:', inspectionsError);
         }
       }
 
