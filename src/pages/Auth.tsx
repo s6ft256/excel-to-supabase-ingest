@@ -88,6 +88,30 @@ const Auth = () => {
     }
   };
 
+  const handleAnonymousSignIn = async () => {
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInAnonymously();
+
+      if (error) throw error;
+
+      toast({
+        title: "Signed in as Guest",
+        description: "You have limited access to the dashboard.",
+      });
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to sign in as guest",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -228,6 +252,20 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+          
+          <div className="mt-4 pt-4 border-t text-center">
+            <Button 
+              variant="outline" 
+              onClick={handleAnonymousSignIn}
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? 'Signing in...' : 'Continue as Guest'}
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">
+              Guest access provides limited functionality
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
