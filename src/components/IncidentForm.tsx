@@ -24,6 +24,7 @@ const incidentSchema = z.object({
   severity_level: z.number().min(1).max(5),
   description: z.string().min(10, "Description must be at least 10 characters"),
   activity: z.string().min(1, "Activity is required"),
+  contractor_id: z.string().optional(),
 });
 
 type IncidentFormData = z.infer<typeof incidentSchema>;
@@ -45,6 +46,7 @@ const IncidentForm = () => {
         severity_level: data.severity_level,
         description: data.description,
         activity: data.activity,
+        contractor_id: data.contractor_id || null,
       });
 
       if (error) throw error;
@@ -196,6 +198,23 @@ const IncidentForm = () => {
                   {...field}
                   placeholder="Describe the incident in detail..."
                   className="min-h-[100px]"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="contractor_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Contractor (Optional)</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Enter contractor ID or company name"
                 />
               </FormControl>
               <FormMessage />

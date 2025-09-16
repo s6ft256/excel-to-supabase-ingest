@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import IncidentForm from '@/components/IncidentForm';
 import InspectionForm from '@/components/InspectionForm';
 import TrainingForm from '@/components/TrainingForm';
-import ReportsCharts from '@/components/ReportsCharts';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -26,43 +25,35 @@ const Reports = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Report Forms</CardTitle>
-                <CardDescription>
-                  Create new incident reports, inspection records, and training sessions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="incident" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="incident">Incidents</TabsTrigger>
-                    <TabsTrigger value="inspection">Inspections</TabsTrigger>
-                    <TabsTrigger value="training">Training</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="incident" className="mt-6">
-                    <IncidentForm />
-                  </TabsContent>
-                  
-                  <TabsContent value="inspection" className="mt-6">
-                    <InspectionForm />
-                  </TabsContent>
-                  
-                  <TabsContent value="training" className="mt-6">
-                    <TrainingForm />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
-            <ReportsCharts />
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Report Forms</CardTitle>
+            <CardDescription>
+              Create new incident reports, inspection records, and training sessions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="incident" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="incident">Incidents</TabsTrigger>
+                <TabsTrigger value="inspection">Inspections</TabsTrigger>
+                <TabsTrigger value="training">Training</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="incident" className="mt-6">
+                <IncidentForm />
+              </TabsContent>
+              
+              <TabsContent value="inspection" className="mt-6">
+                <InspectionForm />
+              </TabsContent>
+              
+              <TabsContent value="training" className="mt-6">
+                <TrainingForm />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

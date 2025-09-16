@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ReportsCharts from '@/components/ReportsCharts';
 
 interface Incident {
   id: number;
@@ -263,6 +264,9 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Charts Section */}
+        <ReportsCharts />
 
         {/* Data Tables */}
         <Tabs defaultValue="incidents" className="space-y-6">
