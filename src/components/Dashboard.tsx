@@ -8,6 +8,8 @@ import { DataTable } from '@/components/ui/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface Incident {
   id: number;
@@ -209,6 +211,12 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">HSE Statistics Dashboard</h1>
           <div className="flex items-center gap-4">
+            <Link to="/reports">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Report
+              </Button>
+            </Link>
             <span className="text-sm text-muted-foreground">
               Welcome, {user?.email}
             </span>
