@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ReportsCharts from '@/components/ReportsCharts';
+import DataImporter from '@/components/DataImporter';
 
 interface Incident {
   id: number;
@@ -263,6 +264,11 @@ const Dashboard = () => {
               <div className="text-2xl font-bold">{totalTrainingSessions}</div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Excel Data Importer */}
+        <div className="mb-8">
+          <DataImporter />
         </div>
 
         {/* Charts Section */}
