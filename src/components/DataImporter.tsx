@@ -1,11 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface ParsedData {
@@ -21,7 +23,20 @@ const DataImporter = () => {
   const [importing, setImporting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const { toast } = useToast();
+
+  const mapSeverityToNumber = (severity: string) => {
+    const severityMap: { [key: string]: number } = {
+      'Low': 1,
+      'Medium': 2,
+      'High': 3,
+      'Critical': 4
+    };
+    return severityMap[severity] || 2;
+  };
 
   const parseExcelFile = (file: File) => {
     const reader = new FileReader();
@@ -42,14 +57,18 @@ const DataImporter = () => {
 
         // Parse the data based on your Excel structure
         jsonData.forEach((row: any, index) => {
-          // Example parsing - adjust based on your Excel structure
-          if (row.type === 'incident' || row.Type === 'incident') {
+          // Parse incidents data (assuming structured incident data)
+          if (row.Incident || row.incident || row['Incident Type'] || row.type === 'incident') {
             incidents.push({
-              date: row.date || row.Date,
-              type: row.incident_type || row['Incident Type'],
-              description: row.description || row.Description,
-              activity: row.activity || row.Activity,
-              severity_level: row.severity_level || row['Severity Level'] || 1,
+              incident: row.Incident || row.incident || row['Incident Type'] || 'Unknown',
+              time: row.Time || row.time || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+              critical_level: row['Critical Level'] || row.critical_level || row.severity_level || 'Medium',
+              place: row.Place || row.place || row.location || 'Unknown',
+              date: row.Date || row.date || new Date().toISOString().split('T')[0],
+              type: row['Incident Type'] || row.incident_type || row.type || 'General',
+              description: row.description || row.Description || '',
+              activity: row.activity || row.Activity || '',
+              severity_level: mapSeverityToNumber(row['Critical Level'] || row.critical_level || 'Medium'),
               contractor_id: row.contractor_id || null
             });
           } else if (row.type === 'training' || row.Type === 'training') {
@@ -125,6 +144,34 @@ const DataImporter = () => {
       parseExcelFile(selectedFile);
     }
   };
+
+  const getSeverityBadgeVariant = (level: string) => {
+    switch (level.toLowerCase()) {
+      case 'low': return 'secondary';
+      case 'medium': return 'default';
+      case 'high': return 'destructive';
+      case 'critical': return 'destructive';
+      default: return 'default';
+    }
+  };
+
+  // Filter and pagination logic for data preview
+  const filteredIncidents = useMemo(() => {
+    if (!parsedData?.incidents) return [];
+    
+    return parsedData.incidents.filter(incident => 
+      Object.values(incident).some(value => 
+        value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [parsedData?.incidents, searchTerm]);
+
+  const paginatedIncidents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredIncidents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredIncidents, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage);
 
   const handleImportData = async () => {
     if (!parsedData) {
@@ -273,8 +320,116 @@ const DataImporter = () => {
 
         {/* Data Preview */}
         {parsedData && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Data Preview</h3>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5" />
+                Data Preview
+              </h3>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search data..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-10 w-64"
+                />
+              </div>
+            </div>
+
+            {/* Incidents Table */}
+            {parsedData.incidents.length > 0 && (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left p-4 font-medium flex items-center gap-2">
+                          Incident
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        </th>
+                        <th className="text-left p-4 font-medium">
+                          Time
+                          <CheckCircle className="w-4 h-4 text-green-600 inline ml-2" />
+                        </th>
+                        <th className="text-left p-4 font-medium">
+                          Critical Level
+                          <CheckCircle className="w-4 h-4 text-green-600 inline ml-2" />
+                        </th>
+                        <th className="text-left p-4 font-medium">
+                          Place
+                          <CheckCircle className="w-4 h-4 text-green-600 inline ml-2" />
+                        </th>
+                        <th className="text-left p-4 font-medium">
+                          Date
+                          <CheckCircle className="w-4 h-4 text-green-600 inline ml-2" />
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedIncidents.map((incident, index) => (
+                        <tr key={index} className="border-t hover:bg-muted/25">
+                          <td className="p-4">
+                            <span className="font-medium text-foreground">
+                              {incident.incident || incident.type}
+                            </span>
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            {incident.time}
+                          </td>
+                          <td className="p-4">
+                            <Badge variant={getSeverityBadgeVariant(incident.critical_level || 'Medium')}>
+                              {incident.critical_level || 'Medium'}
+                            </Badge>
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            {incident.place}
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            {incident.date}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Pagination */}
+                <div className="flex items-center justify-between p-4 border-t bg-muted/25">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredIncidents.length)} of {filteredIncidents.length} rows
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      Previous
+                    </Button>
+                    <span className="text-sm">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Summary Cards */}
             <div className="grid md:grid-cols-3 gap-4">
               <Card>
                 <CardHeader className="pb-3">
@@ -307,18 +462,6 @@ const DataImporter = () => {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Sample Data Display */}
-            {parsedData.incidents.length > 0 && (
-              <div>
-                <h4 className="font-medium mb-2">Sample Incident Data:</h4>
-                <div className="bg-muted p-3 rounded text-sm">
-                  <pre className="whitespace-pre-wrap">
-                    {JSON.stringify(parsedData.incidents[0], null, 2)}
-                  </pre>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
