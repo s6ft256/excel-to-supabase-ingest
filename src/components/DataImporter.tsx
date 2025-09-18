@@ -17,6 +17,12 @@ interface ParsedData {
   inspections: any[];
 }
 
+interface SheetInfo {
+  name: string;
+  rowCount: number;
+  selected: boolean;
+}
+
 const DataImporter = () => {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
@@ -26,6 +32,8 @@ const DataImporter = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [availableSheets, setAvailableSheets] = useState<SheetInfo[]>([]);
+  const [selectedSheets, setSelectedSheets] = useState<string[]>([]);
   const { toast } = useToast();
 
   const mapSeverityToNumber = (severity: string) => {
@@ -45,56 +53,28 @@ const DataImporter = () => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         
-        // Parse different sheets or sections of the Excel file
-        const incidents: any[] = [];
-        const incident_details: any[] = [];
-        const training_sessions: any[] = [];
-        const inspections: any[] = [];
-
-        // Assuming the Excel has specific sheet names or we parse from the first sheet
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-
-        // Parse the data based on your Excel structure
-        jsonData.forEach((row: any, index) => {
-          // Parse incidents data (assuming structured incident data)
-          if (row.Incident || row.incident || row['Incident Type'] || row.type === 'incident') {
-            incidents.push({
-              incident_name: row.Incident || row.incident || row['Incident Type'] || 'Unknown',
-              time: row.Time || row.time || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-              critical_level: row['Critical Level'] || row.critical_level || row.severity_level || 'Medium',
-              place: row.Place || row.place || row.location || 'Unknown',
-              date: row.Date || row.date || new Date().toISOString().split('T')[0],
-              type: row['Incident Type'] || row.incident_type || row.type || 'General',
-              description: row.description || row.Description || row.Incident || row.incident || '',
-              activity: row.activity || row.Activity || row.place || row.Place || '',
-              severity_level: mapSeverityToNumber(row['Critical Level'] || row.critical_level || 'Medium'),
-              contractor_id: row.contractor_id || null
-            });
-          } else if (row.type === 'training' || row.Type === 'training') {
-            training_sessions.push({
-              date: row.date || row.Date,
-              topic: row.topic || row.Topic,
-              type: row.training_type || row['Training Type'],
-              conductor: row.conductor || row.Conductor,
-              no_of_attendees: row.attendees || row.Attendees || 0
-            });
-          } else if (row.type === 'inspection' || row.Type === 'inspection') {
-            inspections.push({
-              date: row.date || row.Date,
-              type: row.inspection_type || row['Inspection Type'],
-              inspector: row.inspector || row.Inspector,
-              score: row.score || row.Score || 0
-            });
-          }
+        // Detect all sheets and their row counts
+        const sheets: SheetInfo[] = workbook.SheetNames.map(sheetName => {
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          return {
+            name: sheetName,
+            rowCount: jsonData.length,
+            selected: false
+          };
         });
-
-        const parsed = { incidents, incident_details, training_sessions, inspections };
-        setParsedData(parsed);
+        
+        setAvailableSheets(sheets);
+        
+        // Auto-select the first sheet if there are any
+        if (sheets.length > 0) {
+          setSelectedSheets([sheets[0].name]);
+          processSelectedSheets(workbook, [sheets[0].name]);
+        }
         
         toast({
-          title: "File Parsed Successfully",
-          description: `Found ${incidents.length} incidents, ${training_sessions.length} training sessions, and ${inspections.length} inspections.`,
+          title: "File Analyzed Successfully",
+          description: `Found ${sheets.length} sheet(s). Select which sheets to import.`,
         });
       } catch (error) {
         toast({
@@ -105,6 +85,85 @@ const DataImporter = () => {
       }
     };
     reader.readAsArrayBuffer(file);
+  };
+
+  const processSelectedSheets = (workbook: XLSX.WorkBook, sheetNames: string[]) => {
+    const incidents: any[] = [];
+    const incident_details: any[] = [];
+    const training_sessions: any[] = [];
+    const inspections: any[] = [];
+
+    // Process each selected sheet
+    sheetNames.forEach(sheetName => {
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      // Parse the data based on your Excel structure
+      jsonData.forEach((row: any, index) => {
+        // Parse incidents data (assuming structured incident data)
+        if (row.Incident || row.incident || row['Incident Type'] || row.type === 'incident' || sheetName.toLowerCase().includes('incident')) {
+          incidents.push({
+            incident_name: row.Incident || row.incident || row['Incident Type'] || 'Unknown',
+            time: row.Time || row.time || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+            critical_level: row['Critical Level'] || row.critical_level || row.severity_level || 'Medium',
+            place: row.Place || row.place || row.location || 'Unknown',
+            date: row.Date || row.date || new Date().toISOString().split('T')[0],
+            type: row['Incident Type'] || row.incident_type || row.type || 'General',
+            description: row.description || row.Description || row.Incident || row.incident || '',
+            activity: row.activity || row.Activity || row.place || row.Place || '',
+            severity_level: mapSeverityToNumber(row['Critical Level'] || row.critical_level || 'Medium'),
+            contractor_id: row.contractor_id || null
+          });
+        } else if (row.type === 'training' || row.Type === 'training' || sheetName.toLowerCase().includes('training')) {
+          training_sessions.push({
+            date: row.date || row.Date,
+            topic: row.topic || row.Topic,
+            type: row.training_type || row['Training Type'],
+            conductor: row.conductor || row.Conductor,
+            no_of_attendees: row.attendees || row.Attendees || 0
+          });
+        } else if (row.type === 'inspection' || row.Type === 'inspection' || sheetName.toLowerCase().includes('inspection')) {
+          inspections.push({
+            date: row.date || row.Date,
+            type: row.inspection_type || row['Inspection Type'],
+            inspector: row.inspector || row.Inspector,
+            score: row.score || row.Score || 0
+          });
+        }
+      });
+    });
+
+    const parsed = { incidents, incident_details, training_sessions, inspections };
+    setParsedData(parsed);
+    
+    toast({
+      title: "Data Processed Successfully",
+      description: `Found ${incidents.length} incidents, ${training_sessions.length} training sessions, and ${inspections.length} inspections.`,
+    });
+  };
+
+  const handleSheetSelection = (sheetName: string, selected: boolean) => {
+    let newSelectedSheets: string[];
+    if (selected) {
+      newSelectedSheets = [...selectedSheets, sheetName];
+    } else {
+      newSelectedSheets = selectedSheets.filter(name => name !== sheetName);
+    }
+    
+    setSelectedSheets(newSelectedSheets);
+    
+    // Re-process data with new selection
+    if (file && newSelectedSheets.length > 0) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        processSelectedSheets(workbook, newSelectedSheets);
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (newSelectedSheets.length === 0) {
+      setParsedData(null);
+    }
   };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -316,8 +375,51 @@ const DataImporter = () => {
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
               File loaded: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+              {availableSheets.length > 0 && (
+                <span className="block mt-2 text-sm">
+                  Found {availableSheets.length} sheet(s): {availableSheets.map(s => s.name).join(', ')}
+                </span>
+              )}
             </AlertDescription>
           </Alert>
+        )}
+
+        {/* Sheet Selection */}
+        {availableSheets.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Select Sheets to Import</CardTitle>
+              <CardDescription>
+                Choose which sheets contain the data you want to import
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {availableSheets.map((sheet) => (
+                  <div key={sheet.name} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id={`sheet-${sheet.name}`}
+                        checked={selectedSheets.includes(sheet.name)}
+                        onChange={(e) => handleSheetSelection(sheet.name, e.target.checked)}
+                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                      />
+                      <label htmlFor={`sheet-${sheet.name}`} className="font-medium">
+                        {sheet.name}
+                      </label>
+                    </div>
+                    <Badge variant="secondary">
+                      {sheet.rowCount} rows
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 text-sm text-muted-foreground">
+                Selected {selectedSheets.length} of {availableSheets.length} sheets
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Data Preview */}
