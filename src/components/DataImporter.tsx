@@ -60,14 +60,14 @@ const DataImporter = () => {
           // Parse incidents data (assuming structured incident data)
           if (row.Incident || row.incident || row['Incident Type'] || row.type === 'incident') {
             incidents.push({
-              incident: row.Incident || row.incident || row['Incident Type'] || 'Unknown',
+              incident_name: row.Incident || row.incident || row['Incident Type'] || 'Unknown',
               time: row.Time || row.time || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
               critical_level: row['Critical Level'] || row.critical_level || row.severity_level || 'Medium',
               place: row.Place || row.place || row.location || 'Unknown',
               date: row.Date || row.date || new Date().toISOString().split('T')[0],
               type: row['Incident Type'] || row.incident_type || row.type || 'General',
-              description: row.description || row.Description || '',
-              activity: row.activity || row.Activity || '',
+              description: row.description || row.Description || row.Incident || row.incident || '',
+              activity: row.activity || row.Activity || row.place || row.Place || '',
               severity_level: mapSeverityToNumber(row['Critical Level'] || row.critical_level || 'Medium'),
               contractor_id: row.contractor_id || null
             });
@@ -244,7 +244,7 @@ const DataImporter = () => {
 
       toast({
         title: "Import Complete",
-        description: "Data has been imported successfully. Refresh the dashboard to see the new data.",
+        description: "Data has been imported successfully. The page will refresh to show the new data.",
       });
       
       // Reset state after successful import
@@ -252,6 +252,8 @@ const DataImporter = () => {
         setFile(null);
         setParsedData(null);
         setUploadProgress(0);
+        // Refresh the page to show updated data
+        window.location.reload();
       }, 2000);
       
     } catch (error) {
@@ -374,7 +376,7 @@ const DataImporter = () => {
                         <tr key={index} className="border-t hover:bg-muted/25">
                           <td className="p-4">
                             <span className="font-medium text-foreground">
-                              {incident.incident || incident.type}
+                              {incident.incident_name || incident.incident || incident.type}
                             </span>
                           </td>
                           <td className="p-4 text-muted-foreground">

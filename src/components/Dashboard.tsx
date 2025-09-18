@@ -268,7 +268,7 @@ const Dashboard = () => {
 
         {/* Excel Data Importer */}
         <div className="mb-8">
-          <DataImporter />
+          <DataImporter key={`data-importer-${Date.now()}`} />
         </div>
 
         {/* Charts Section */}

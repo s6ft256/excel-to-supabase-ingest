@@ -56,31 +56,43 @@ export type Database = {
         Row: {
           activity: string | null
           contractor_id: string | null
+          critical_level: string | null
           date: string
           description: string | null
           id: number
+          incident_name: string | null
           inserted_at: string | null
+          place: string | null
           severity_level: number | null
+          time: string | null
           type: string | null
         }
         Insert: {
           activity?: string | null
           contractor_id?: string | null
+          critical_level?: string | null
           date: string
           description?: string | null
           id?: number
+          incident_name?: string | null
           inserted_at?: string | null
+          place?: string | null
           severity_level?: number | null
+          time?: string | null
           type?: string | null
         }
         Update: {
           activity?: string | null
           contractor_id?: string | null
+          critical_level?: string | null
           date?: string
           description?: string | null
           id?: number
+          incident_name?: string | null
           inserted_at?: string | null
+          place?: string | null
           severity_level?: number | null
+          time?: string | null
           type?: string | null
         }
         Relationships: [
